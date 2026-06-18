@@ -120,6 +120,30 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/debug")
+def debug():
+    """GECICI teshis: Railway IP'sinden gercekte hangi formatlar geliyor?"""
+    import traceback
+    q = request.args.get("q", "tarkan dudu")
+    opts = {"quiet": True, "no_warnings": True, "default_search": "ytsearch"}
+    if COOKIE_FILE:
+        opts["cookiefile"] = COOKIE_FILE
+    out = {"yt_dlp": yt_dlp.version.__version__, "cookie": bool(COOKIE_FILE)}
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(f"ytsearch1:{q}", download=False)
+            entry = info["entries"][0] if "entries" in info else info
+            out["title"] = entry.get("title")
+            out["formats"] = [
+                f"{f.get('format_id')} {f.get('ext')} a:{f.get('acodec')} v:{f.get('vcodec')} {f.get('format_note')}"
+                for f in entry.get("formats", [])
+            ]
+        return out
+    except Exception:
+        out["error"] = traceback.format_exc()
+        return out
+
+
 @app.route("/api/indir")
 def indir():
     """Listeyi alir, sira sira indirir ve ilerlemeyi SSE ile yayinlar."""
