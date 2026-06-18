@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liste · MP3 İndirici</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15110d;
+    --surface:#211b15;
+    --surface-2:#2c241c;
+    --line:rgba(239,231,216,.09);
+    --text:#efe7d8;
+    --muted:#9b8e7c;
+    --accent:#f2a33c;
+    --accent-soft:rgba(242,163,60,.14);
+    --ok:#62b98c;
+    --err:#e2615a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(242,163,60,.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+    padding:clamp(20px,5vw,56px);
+  }
+  .wrap{max-width:760px;margin:0 auto}
+
+  /* ---- başlık ---- */
+  header{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+  .reel{
+    width:42px;height:42px;border-radius:50%;
+    border:3px solid var(--accent);
+    position:relative;flex:none;
+    background:
+      conic-gradient(from 0deg, transparent 0 18%, var(--accent) 18% 25%,
+      transparent 25% 68%, var(--accent) 68% 75%, transparent 75%);
+  }
+  .reel::after{content:"";position:absolute;inset:14px;border-radius:50%;background:var(--bg)}
+  .reel.spin{animation:spin 1.4s linear infinite}
+  h1{
+    font-family:"Bricolage Grotesque",sans-serif;
+    font-weight:800;font-size:clamp(28px,6vw,44px);
+    letter-spacing:-.02em;line-height:1;
+  }
+  h1 em{font-style:normal;color:var(--accent)}
+  .sub{color:var(--muted);font-size:15px;margin:14px 0 28px;max-width:54ch}
+
+  /* ---- giriş ---- */
+  .panel{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;padding:20px;
+  }
+  label.tag{
+    display:block;font-family:"JetBrains Mono",monospace;
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:10px;
+  }
+  textarea{
+    width:100%;min-height:160px;resize:vertical;
+    background:var(--bg);color:var(--text);
+    border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;font-size:16px;font-family:inherit;line-height:1.7;
+  }
+  textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  textarea::placeholder{color:#6a6052}
+
+  .row{display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap}
+  button{
+    font-family:inherit;font-size:15px;font-weight:600;
+    border:none;border-radius:11px;padding:13px 22px;cursor:pointer;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .btn-go{background:var(--accent);color:#231708}
+  .btn-zip{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+  .count{
+    font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--muted);
+    margin-left:auto;
+  }
+  .count b{color:var(--accent)}
+
+  /* ---- kuyruk ---- */
+  .queue{margin-top:22px;display:flex;flex-direction:column;gap:8px}
+  .track{
+    display:flex;align-items:center;gap:14px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;
+    animation:in .25s ease both;
+  }
+  .num{
+    font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted);
+    width:24px;text-align:right;flex:none;
+  }
+  .body{min-width:0;flex:1}
+  .name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .state{font-size:13px;color:var(--muted);margin-top:2px}
+  .track.done .state{color:var(--ok)}
+  .track.err .state{color:var(--err)}
+
+  /* eşitleyici çubukları (indirilirken) */
+  .eq{display:none;gap:3px;align-items:flex-end;height:18px;flex:none}
+  .track.busy .eq{display:flex}
+  .eq span{width:3px;background:var(--accent);border-radius:2px;animation:bounce 1s ease-in-out infinite}
+  .eq span:nth-child(2){animation-delay:.2s}
+  .eq span:nth-child(3){animation-delay:.4s}
+  .eq span:nth-child(4){animation-delay:.6s}
+
+  .dl{
+    font-family:"JetBrains Mono",monospace;font-size:12px;
+    color:var(--accent);text-decoration:none;flex:none;
+    border:1px solid var(--accent-soft);background:var(--accent-soft);
+    padding:7px 12px;border-radius:9px;
+  }
+  .dl:hover{background:var(--accent);color:#231708}
+
+  footer{margin-top:32px;color:#6a6052;font-size:12.5px;line-height:1.6}
+
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes bounce{0%,100%{height:5px}50%{height:18px}}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="reel" id="reel"></div>
+    <h1>Liste<em>.</em>mp3</h1>
+  </header>
+  <p class="sub">Her satıra bir şarkı yaz — sade isim yeter. Her satır YouTube'da aranır, en uygun sonuç bulunur ve MP3 olarak indirilir.</p>
+
+  <div class="panel">
+    <label class="tag" for="liste">şarkı listesi · her satır bir parça</label>
+    <textarea id="liste" placeholder="dudu dudu&#10;kuzu kuzu&#10;tarkan kuzu kuzu&#10;sezen aksu firuze"></textarea>
+    <div class="row">
+      <button class="btn-go" id="go">İndir</button>
+      <button class="btn-zip" id="zip" style="display:none">Tümünü ZIP indir</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <div class="queue" id="queue"></div>
+
+  <footer>
+    Yerel araç — sadece senin bilgisayarında çalışır. Telifli içeriği indirmeden önce
+    hakkına sahip olduğundan emin ol. ffmpeg kurulu olmalıdır.
+  </footer>
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const queue = $("#queue"), goBtn = $("#go"), zipBtn = $("#zip"),
+      reel = $("#reel"), countEl = $("#count");
+let rows = [], done = 0, total = 0, session = null;
+
+function render(){
+  queue.innerHTML = "";
+  rows.forEach((r,i)=>{
+    const el = document.createElement("div");
+    el.className = "track " + r.status;
+    el.innerHTML = `
+      <span class="num">${String(i+1).padStart(2,"0")}</span>
+      <div class="eq"><span></span><span></span><span></span><span></span></div>
+      <div class="body">
+        <div class="name">${escapeHtml(r.title || r.query)}</div>
+        <div class="state">${r.state}</div>
+      </div>
+      ${r.url ? `<a class="dl" href="${r.url}">indir</a>` : ""}`;
+    queue.appendChild(el);
+  });
+  countEl.innerHTML = total ? `<b>${done}</b> / ${total}` : "";
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c=>(
+    {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+
+goBtn.addEventListener("click", ()=>{
+  const text = $("#liste").value.trim();
+  if(!text) return;
+  const songs = text.split("\n").map(s=>s.trim()).filter(Boolean);
+
+  rows = songs.map(q=>({query:q, status:"wait", state:"bekliyor", title:"", url:""}));
+  done = 0; total = songs.length; session = null;
+  goBtn.disabled = true; zipBtn.style.display = "none";
+  reel.classList.add("spin");
+  render();
+
+  const es = new EventSource("/api/indir?liste=" + encodeURIComponent(text));
+  es.onmessage = (e)=>{
+    const d = JSON.parse(e.data);
+    if(d.type === "start"){
+      session = d.session;
+    } else if(d.type === "searching"){
+      rows[d.index].status = "busy";
+      rows[d.index].state = "aranıyor ve indiriliyor…";
+    } else if(d.type === "done"){
+      rows[d.index].status = "done";
+      rows[d.index].state = "indirildi";
+      rows[d.index].title = d.title;
+      rows[d.index].url = d.url;
+      done++;
+    } else if(d.type === "error"){
+      rows[d.index].status = "err";
+      rows[d.index].state = "bulunamadı / hata — " + shorten(d.message);
+      done++;
+    } else if(d.type === "finished"){
+      es.close();
+      goBtn.disabled = false;
+      reel.classList.remove("spin");
+      if(rows.some(r=>r.url)) zipBtn.style.display = "inline-block";
+    }
+    render();
+  };
+  es.onerror = ()=>{
+    es.close(); goBtn.disabled = false; reel.classList.remove("spin");
+    rows.forEach(r=>{ if(r.status==="wait"||r.status==="busy"){
+      r.status="err"; r.state="bağlantı kesildi"; }});
+    render();
+  };
+});
+
+zipBtn.addEventListener("click", ()=>{
+  if(session) window.location = "/api/zip?session=" + session;
+});
+function shorten(m){ m=String(m); return m.length>50 ? m.slice(0,50)+"…" : m; }
+</script>
+</body>
+</html>
