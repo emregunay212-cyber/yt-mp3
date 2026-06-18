@@ -54,6 +54,19 @@ def temizle_eskiler():
         pass
 
 
+# YouTube, datacenter IP'lerini (Railway vb.) "bot" sanip engelleyebilir.
+# Bunu asmak icin cikis cerezleri verilir. Cerez icerigini YT_COOKIES ortam
+# degiskenine (Netscape cookies.txt bicimi) koyariz; baslangicta gecici bir
+# dosyaya yazip yt-dlp'ye veriyoruz. Degisken yoksa ozellik devre disi kalir
+# (yerelde kendi IP'nle zaten gerek olmaz).
+COOKIE_FILE = None
+_cookies = os.environ.get("YT_COOKIES")
+if _cookies:
+    COOKIE_FILE = os.path.join(tempfile.gettempdir(), "yt_cookies.txt")
+    with open(COOKIE_FILE, "w", encoding="utf-8") as _f:
+        _f.write(_cookies)
+
+
 def sse(event_type, **data):
     """Tek bir Server-Sent Event satiri uretir."""
     payload = {"type": event_type, **data}
@@ -85,6 +98,10 @@ def download_one(query, out_dir):
         # Ayni dosya tekrar indirilirse uzerine yazmasin diye:
         "overwrites": False,
     }
+
+    # Cerez varsa "bot" engelini asmak icin yt-dlp'ye ekle.
+    if COOKIE_FILE:
+        ydl_opts["cookiefile"] = COOKIE_FILE
 
     # Satir bir baglanti ise dogrudan indir, degilse aramaya cevir.
     is_url = bool(re.match(r"https?://", query, re.I))
