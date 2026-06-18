@@ -123,6 +123,8 @@
   }
   .dl:hover{background:var(--accent);color:#231708}
 
+  .player{width:100%;height:36px;margin-top:10px;display:block;border-radius:9px}
+
   footer{margin-top:32px;color:#6a6052;font-size:12.5px;line-height:1.6}
 
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -139,11 +141,11 @@
     <div class="reel" id="reel"></div>
     <h1>Liste<em>.</em>mp3</h1>
   </header>
-  <p class="sub">Her satıra bir şarkı yaz — sade isim yeter. Her satır YouTube'da aranır, en uygun sonuç bulunur ve MP3 olarak indirilir.</p>
+  <p class="sub">Her satıra bir şarkı adı ya da YouTube bağlantısı yaz. İsimler YouTube'da aranır, bağlantılar doğrudan indirilir — hepsi MP3 olur. Her parçayı indirince doğru olup olmadığını dinleyebilirsin.</p>
 
   <div class="panel">
-    <label class="tag" for="liste">şarkı listesi · her satır bir parça</label>
-    <textarea id="liste" placeholder="dudu dudu&#10;kuzu kuzu&#10;tarkan kuzu kuzu&#10;sezen aksu firuze"></textarea>
+    <label class="tag" for="liste">şarkı adı veya bağlantı · her satır bir parça</label>
+    <textarea id="liste" placeholder="dudu dudu&#10;tarkan kuzu kuzu&#10;https://youtu.be/...&#10;sezen aksu firuze"></textarea>
     <div class="row">
       <button class="btn-go" id="go">İndir</button>
       <button class="btn-zip" id="zip" style="display:none">Tümünü ZIP indir</button>
@@ -165,27 +167,46 @@ const queue = $("#queue"), goBtn = $("#go"), zipBtn = $("#zip"),
       reel = $("#reel"), countEl = $("#count");
 let rows = [], done = 0, total = 0, session = null;
 
-function render(){
-  queue.innerHTML = "";
-  rows.forEach((r,i)=>{
-    const el = document.createElement("div");
-    el.className = "track " + r.status;
-    el.innerHTML = `
-      <span class="num">${String(i+1).padStart(2,"0")}</span>
-      <div class="eq"><span></span><span></span><span></span><span></span></div>
-      <div class="body">
-        <div class="name">${escapeHtml(r.title || r.query)}</div>
-        <div class="state">${r.state}</div>
-      </div>
-      ${r.url ? `<a class="dl" href="${r.url}">indir</a>` : ""}`;
-    queue.appendChild(el);
-  });
-  countEl.innerHTML = total ? `<b>${done}</b> / ${total}` : "";
+function makeTrack(i){
+  const el = document.createElement("div");
+  const num = document.createElement("span");
+  num.className = "num"; num.textContent = String(i+1).padStart(2,"0");
+  const eq = document.createElement("div"); eq.className = "eq";
+  for(let k=0;k<4;k++) eq.appendChild(document.createElement("span"));
+  const body = document.createElement("div"); body.className = "body";
+  const name = document.createElement("div"); name.className = "name";
+  const state = document.createElement("div"); state.className = "state";
+  const audio = document.createElement("audio");
+  audio.className = "player"; audio.controls = true; audio.preload = "none"; audio.hidden = true;
+  body.append(name, state, audio);
+  const dl = document.createElement("a"); dl.className = "dl";
+  dl.textContent = "indir"; dl.hidden = true;
+  el.append(num, eq, body, dl);
+  return el;
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"]/g, c=>(
-    {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(){
+  rows.forEach((r,i)=>{
+    let el = queue.children[i];
+    if(!el){ el = makeTrack(i); queue.appendChild(el); }
+    el.className = "track " + r.status;
+    el.querySelector(".name").textContent = r.title || r.query;
+    el.querySelector(".state").textContent = r.state;
+    const audio = el.querySelector(".player"), dl = el.querySelector(".dl");
+    if(r.url){
+      // src'yi yalnizca ilk kez ata -> calan onizleme yeniden cizimde kesilmez
+      if(audio.dataset.src !== r.url){ audio.src = r.url; audio.dataset.src = r.url; }
+      audio.hidden = false; dl.hidden = false; dl.href = r.url;
+    } else {
+      audio.hidden = true; dl.hidden = true;
+    }
+  });
+  while(queue.children.length > rows.length) queue.removeChild(queue.lastChild);
+  countEl.textContent = "";
+  if(total){
+    const b = document.createElement("b"); b.textContent = done;
+    countEl.append(b, " / " + total);
+  }
 }
 
 goBtn.addEventListener("click", ()=>{

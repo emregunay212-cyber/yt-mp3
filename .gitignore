@@ -1,0 +1,9 @@
+# Indirilen/gecici ses dosyalari repoya girmesin
+indirilenler/
+
+# Python onbellek
+__pycache__/
+*.pyc
+
+# Loglar
+logs/

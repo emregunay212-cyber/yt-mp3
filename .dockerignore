@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+indirilenler/
+logs/
+.git/
+.gitattributes
+README.md
