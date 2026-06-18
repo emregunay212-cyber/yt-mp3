@@ -97,6 +97,9 @@ def download_one(query, out_dir):
         "fragment_retries": 3,
         # Ayni dosya tekrar indirilirse uzerine yazmasin diye:
         "overwrites": False,
+        # Cerez olmadan "bot" engelini asma denemesi: web disindaki istemciler
+        # (android/ios/tv) bazen dogrulama istemez. Calismazsa cerez sart.
+        "extractor_args": {"youtube": {"player_client": ["android", "ios", "tv", "web"]}},
     }
 
     # Cerez varsa "bot" engelini asmak icin yt-dlp'ye ekle.
