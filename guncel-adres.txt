@@ -1,0 +1,6 @@
+KALICI INTERNET ADRESI (Tailscale Funnel - asla degismez):
+
+    https://retmen.tailaff0cd.ts.net
+
+Bu adresi her yerden (telefon, baska wifi, mobil veri) acabilirsin.
+Bilgisayar acik oldugu surece calisir; yeniden baslatmada bile ayni kalir.

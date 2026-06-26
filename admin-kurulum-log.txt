@@ -1,0 +1,9 @@
+﻿=== yt-mp3 yonetici kurulum basl/log ===
+1) SYSTEM gorevi 'yt-mp3-sistem' olusturuldu: TAMAM
+2) Otomatik giris ayarlandi (kullanici=ilkokullab, alan=ÖĞRETMEN): TAMAM
+3) Eski Startup vbs silindi: TAMAM
+4) Tailscale kuruluyor (winget)...
+4) Tailscale kuruldu: TAMAM
+5) Test: eski surecler kapatiliyor...
+5) SYSTEM gorevi calisti. Adres: https://embedded-absence-app-layers.trycloudflare.com  (disaridan test: HTTP HATA)
+===DONE===
